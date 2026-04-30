@@ -1,0 +1,6 @@
+Thumbs.db
+*.dll
+*.exe
+*.fbs
+*.zip
+int_*.*
