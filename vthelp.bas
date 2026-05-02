@@ -6,7 +6,7 @@
 #cmdline "-s gui -gen gcc -O 2"
 #Include Once "vt/vt.bi"
 
-Const VTH_VERSION = "1.0.0"
+Const VTH_VERSION = "1.0.1"
 ' ------------------------------------------------------------
 ' Layout constants  (VT_SCREEN_12 = 80x30)
 ' ------------------------------------------------------------
@@ -453,12 +453,12 @@ Sub hlp_render(ti As Long)
             rl_reflow bln, wbuf
 
         Case "see"
-            ' One see-also entry per line  "  ◄ topicname ►"
+            ' One see-also entry per line
             Dim strim As String = str_trim(bln)
             If strim <> "" Then
                 Dim ltxt As String = "  " & Chr(17) & " " & strim & " " & Chr(16)
                 rl_add ltxt, 0, 0, 1
-                ' Name starts at char pos 5 in ltxt (after "  ◄ ")
+                ' Name starts at char pos 5 in ltxt
                 lnk_add nrlines - 1, 5, 4 + Len(strim), strim
             End If
 
@@ -585,10 +585,7 @@ End Sub
 
 Sub draw_chrome()
     ' Top bar: app name left, filename right
-    ' FIXME: logical correct would be line 1, not 2: 
-    ' some quirk to fix in libvt regarding vt_print/vt_view_print mismatching
-    ' eventually the internal putch
-    draw_bar 2, "[ VTHELP " & VTH_VERSION & "]", "[ " & hlp_disp & " ]"
+    draw_bar 1, "[ VTHELP " & VTH_VERSION & "]", "[ " & hlp_disp & " ]"
     
     ' Bottom bar: key hints
     draw_bar HLP_ROWS, "F1 Index  F2 Content  Tab/S+Tab Links  PgUp/PgDn  ESC Back", ""
@@ -775,6 +772,7 @@ End If
 vt_mouse 1
 vt_copypaste VT_ENABLED
 vt_locate ,,0    ' hide cursor; vthelp draws its own selection
+vt_scroll_enable(VT_DISABLED)
 
 ' Navigate to the first topic without creating a back-stack entry
 cur_pane = 0
@@ -887,6 +885,7 @@ Do
 
     ' --- Draw frame ---
     vt_view_print
+        
     vt_color C_BODY, C_BG
     vt_cls
 
@@ -894,11 +893,11 @@ Do
     draw_index
     draw_content
 
-    ' Leave viewport set to active pane — mouse copy-paste inherits it
+    ' Leave viewport set to active pane - mouse copy-paste inherits it
     If cur_pane = 0 Then
-        vt_view_print -1, -1, 1, HLP_IDX_W
+        vt_view_print HLP_PNL_T, HLP_PNL_B, 1, HLP_IDX_W
     Else
-        vt_view_print -1, -1, HLP_CNT_C, HLP_COLS
+        vt_view_print HLP_PNL_T, HLP_PNL_B, HLP_CNT_C, HLP_COLS
     End If
 
     vt_sleep 25
