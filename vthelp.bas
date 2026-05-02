@@ -711,7 +711,7 @@ Sub handle_click(mx As Long, my As Long)
             If ilst(ei).is_grp = 0 Then
                 idx_sel = ei
                 hlp_navigate ilst(ei).tidx
-                cur_pane = 1
+                'cur_pane = 1
             End If
         End If
 
