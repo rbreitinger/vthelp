@@ -6,21 +6,21 @@
 #cmdline "-s gui -gen gcc -O 2"
 #Include Once "vt/vt.bi"
 
-Const VTH_VERSION = "1.0.1"
+Const VTH_VERSION = "1.0.2"
 ' ------------------------------------------------------------
-' Layout constants  (VT_SCREEN_12 = 80x30)
+' Layout constants  (VT_SCREEN_120_45)
 ' ------------------------------------------------------------
-Const HLP_ROWS   = 30         ' screen rows
-Const HLP_COLS   = 80         ' screen cols
+Const HLP_ROWS   = 45         ' screen rows
+Const HLP_COLS   = 120        ' screen cols
 Const HLP_IDX_W  = 22         ' index pane width, cols 1..22
 Const HLP_DIV_C  = 23         ' divider column
 Const HLP_CNT_C  = 24         ' content pane first column
-Const HLP_CNT_W  = 57         ' content pane width, cols 24..80
+Const HLP_CNT_W  = 97         ' content pane width, cols 24..120
 Const HLP_PNL_T  = 2          ' pane top row (below top bar)
-Const HLP_PNL_B  = 29         ' pane bottom row (above bottom bar)
-Const HLP_PNL_H  = 28         ' HLP_PNL_B - HLP_PNL_T + 1
+Const HLP_PNL_B  = 44         ' pane bottom row (above bottom bar)
+Const HLP_PNL_H  = 43         ' HLP_PNL_B - HLP_PNL_T + 1
 Const HLP_BACK_M = 32         ' maximum back-stack depth
-Const HLP_TXT_W  = 55         ' usable reflow width inside content pane
+Const HLP_TXT_W  = 95         ' usable reflow width inside content pane
 
 ' ------------------------------------------------------------
 ' Color constants
@@ -765,7 +765,7 @@ bstk_d = 0
 
 ' --- Initialise VT ---
 vt_title "VTHELP"
-If vt_screen(VT_SCREEN_12, VT_WINDOWED ) <> 0 Then
+If vt_screen(VT_SCREEN_120_45, VT_WINDOWED ) <> 0 Then
     Print "vthelp: vt_screen failed"
     End 1
 End If
