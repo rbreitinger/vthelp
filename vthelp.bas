@@ -4,7 +4,7 @@
 ' Requires: VT library (vt/vt.bi), FreeBASIC 1.10.1
 ' Usage:    vthelp.exe myfile.vth
 ' ============================================================
-#cmdline "-s console -gen gcc -O 2"
+#cmdline "-s gui -gen gcc -O 2"
 #Include Once "vt/vt.bi"
 
 Const VTH_VERSION = "1.0.3"
