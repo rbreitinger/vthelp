@@ -1,26 +1,27 @@
+
 ' ============================================================
 ' VTHELP.BAS  --  DOS-style .vth help file viewer
 ' Requires: VT library (vt/vt.bi), FreeBASIC 1.10.1
 ' Usage:    vthelp.exe myfile.vth
 ' ============================================================
-#cmdline "-s gui -gen gcc -O 2"
+#cmdline "-s console -gen gcc -O 2"
 #Include Once "vt/vt.bi"
 
-Const VTH_VERSION = "1.0.2"
+Const VTH_VERSION = "1.0.3"
 ' ------------------------------------------------------------
 ' Layout constants  (VT_SCREEN_120_45)
 ' ------------------------------------------------------------
-Const HLP_ROWS   = 45         ' screen rows
-Const HLP_COLS   = 120        ' screen cols
-Const HLP_IDX_W  = 22         ' index pane width, cols 1..22
-Const HLP_DIV_C  = 23         ' divider column
-Const HLP_CNT_C  = 24         ' content pane first column
-Const HLP_CNT_W  = 97         ' content pane width, cols 24..120
-Const HLP_PNL_T  = 2          ' pane top row (below top bar)
-Const HLP_PNL_B  = 44         ' pane bottom row (above bottom bar)
-Const HLP_PNL_H  = 43         ' HLP_PNL_B - HLP_PNL_T + 1
-Const HLP_BACK_M = 32         ' maximum back-stack depth
-Const HLP_TXT_W  = 95         ' usable reflow width inside content pane
+Const HLP_ROWS   = 40                  ' screen rows
+Const HLP_COLS   = 100                 ' screen cols
+Const HLP_IDX_W  = 22                  ' index pane width, cols 1..22
+Const HLP_DIV_C  = 23                  ' divider column
+Const HLP_CNT_C  = 24                  ' content pane first column
+Const HLP_CNT_W  = HLP_COLS- HLP_DIV_C ' content pane width, cols 24..120
+Const HLP_PNL_T  = 2                   ' pane top row (below top bar)
+Const HLP_PNL_B  = HLP_ROWS-1          ' pane bottom row (above bottom bar)
+Const HLP_PNL_H  = HLP_ROWS-2          ' HLP_PNL_B - HLP_PNL_T + 1
+Const HLP_BACK_M = 32                  ' maximum back-stack depth
+Const HLP_TXT_W  = HLP_CNT_W-2         ' usable reflow width inside content pane
 
 ' ------------------------------------------------------------
 ' Color constants
@@ -765,7 +766,7 @@ bstk_d = 0
 
 ' --- Initialise VT ---
 vt_title "VTHELP"
-If vt_screen(VT_SCREEN_120_45, VT_WINDOWED ) <> 0 Then
+if vt_screen(HLP_COLS+(HLP_ROWS shl 8), VT_WINDOWED ) <> 0 Then
     Print "vthelp: vt_screen failed"
     End 1
 End If
