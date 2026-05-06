@@ -7,7 +7,7 @@
 #cmdline "-s gui -gen gcc -O 2"
 #Include Once "vt/vt.bi"
 
-Const VTH_VERSION = "1.0.3"
+Const VTH_VERSION = "1.0.4"
 ' ------------------------------------------------------------
 ' Layout constants  (VT_SCREEN_120_45)
 ' ------------------------------------------------------------
