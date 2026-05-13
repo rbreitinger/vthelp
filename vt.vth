@@ -1,263 +1,3 @@
-' ============================================================
-' vt.vth  --  VT Library API Reference
-' VT Virtual Text Screen Library v1.6.0
-' FreeBASIC 1.10.1 / SDL2 / Windows + Linux
-' ============================================================
-
-' ---- group: Constants ----
-:topic c_screenmodes
-:short Screen mode constants for vt_screen
-:group Constants
-Passed as the mode argument to vt_screen.
-VT_SCREEN_TILES uses 8x8 font data scaled to
-16x16 glyphs -- useful for square-cell tiles.
-
-:params
-  VT_SCREEN_0       = 0     80x25  glyph 8x16
-  VT_SCREEN_2       = 2     80x25  glyph 8x8
-  VT_SCREEN_9       = 9     80x25  glyph 8x14
-  VT_SCREEN_12      = 12    80x30  glyph 8x16
-  VT_SCREEN_13      = 13    40x25  glyph 8x8
-  VT_SCREEN_EGA43   = 43    80x43  glyph 8x8
-  VT_SCREEN_VGA50   = 50    80x50  glyph 8x8
-  VT_SCREEN_TILES   = 100   40x25  glyph 16x16
-  VT_SCREEN_100_40  = 200  100x40  glyph 8x16
-  VT_SCREEN_100_50  = 201  100x50  glyph 8x8
-  VT_SCREEN_120_45  = 300  120x45  glyph 8x16
-  VT_SCREEN_120_50  = 301  120x50  glyph 8x8
-  
-:see
-vt_screen
-c_winflags
-
-:topic c_winflags
-:short Window flag constants for vt_screen
-:group Constants
-Passed as the flags argument to vt_screen.
-Combine multiple flags with Or.
-
-:params
-  VT_WINDOWED          = 1
-      Resizable window (default).
-  VT_FULLSCREEN_ASPECT = 2
-      Fullscreen, integer-scaled, letterboxed.
-  VT_FULLSCREEN_STRETCH = 4
-      Fullscreen, stretches to fill display.
-  VT_NO_RESIZE         = 8
-      Prevent user from resizing the window.
-  VT_VSYNC             = 16
-      Enable vertical sync. Off by default.
-  VT_WINDOWED_MAX      = 32
-      Start maximised. Avoid with VT_NO_RESIZE.
-:see
-vt_screen
-c_screenmodes
-
-:topic c_colors
-:short Color index constants (0-15 + VT_BLINK)
-:group Constants
-Used with vt_color, vt_cls, vt_set_cell etc.
-These are VT_COLOR_IDX enum values 0-15.
-OR any foreground color with VT_BLINK (16)
-to enable character blinking.
-
-:params
-   0 VT_BLACK          8 VT_DARK_GREY
-   1 VT_BLUE           9 VT_BRIGHT_BLUE
-   2 VT_GREEN         10 VT_BRIGHT_GREEN
-   3 VT_CYAN          11 VT_BRIGHT_CYAN
-   4 VT_RED           12 VT_BRIGHT_RED
-   5 VT_MAGENTA       13 VT_BRIGHT_MAGENTA
-   6 VT_BROWN         14 VT_YELLOW
-   7 VT_LIGHT_GREY    15 VT_WHITE
-  16 VT_BLINK  (OR with fg to blink)
-:example
-' Blinking white text on blue:
-vt_color VT_WHITE Or VT_BLINK, VT_BLUE
-:see
-vt_color
-vt_cls
-vt_set_cell
-
-:topic c_keymacros
-:short Key-event extraction macros
-:group Constants
-vt_inkey and vt_getkey return a packed ULong.
-Use these macros to extract fields from it.
-
-:params
-  VT_CHAR(k)
-      ASCII code of the resulting character
-      (Ctrl+letter gives 1-26). 0 for special
-      keys -- use VT_SCAN for those.
-  VT_SCAN(k)
-      VT scancode (bits 16-27). Only meaningful
-      for VT_KEY_* constants. Returns 0 for
-      regular letter/digit/symbol keys.
-      Always compare via this macro.
-  VT_REPEAT(k)
-      1 if this is an auto-repeat event.
-  VT_SHIFT(k)
-      1 if Shift was held.
-  VT_CTRL(k)
-      1 if Ctrl was held.
-  VT_ALT(k)
-      1 if Alt was held.
-:example
-Dim k As ULong = vt_getkey()
-Select Case VT_SCAN(k)
-    Case VT_KEY_UP    : ' move up
-    Case VT_KEY_DOWN  : ' move down
-    Case VT_KEY_ENTER : ' confirm
-    Case Else
-        If VT_CHAR(k) = Asc("q") Then End
-End Select
-:see
-vt_inkey
-vt_getkey
-c_keyscans
-
-:topic c_keyscans
-:short VT_KEY_* scancode constants
-:group Constants
-Compare these against VT_SCAN(k). Never
-compare them directly against the raw ULong
-value returned by vt_inkey.
-
-:params
-  F-keys:
-  VT_KEY_F1 =59   VT_KEY_F7  =65
-  VT_KEY_F2 =60   VT_KEY_F8  =66
-  VT_KEY_F3 =61   VT_KEY_F9  =67
-  VT_KEY_F4 =62   VT_KEY_F10 =68
-  VT_KEY_F5 =63   VT_KEY_F11 =133
-  VT_KEY_F6 =64   VT_KEY_F12 =134
-
-  Navigation:
-  VT_KEY_UP    =72   VT_KEY_HOME =71
-  VT_KEY_DOWN  =80   VT_KEY_END  =79
-  VT_KEY_LEFT  =75   VT_KEY_PGUP =73
-  VT_KEY_RIGHT =77   VT_KEY_PGDN =81
-  VT_KEY_INS   =82   VT_KEY_DEL  =83
-
-  Special:
-  VT_KEY_ESC   =1    VT_KEY_LSHIFT =42
-  VT_KEY_ENTER =28   VT_KEY_RSHIFT =54
-  VT_KEY_BKSP  =14   VT_KEY_LCTRL  =29
-  VT_KEY_TAB   =15   VT_KEY_RCTRL  =157
-  VT_KEY_SPACE =57   VT_KEY_LALT   =56
-  VT_KEY_LWIN  =219  VT_KEY_RALT   =184
-  VT_KEY_RWIN  =220
-:see
-c_keymacros
-vt_inkey
-vt_getkey
-vt_key_held
-
-:topic c_mousebtns
-:short Mouse button bitmask constants
-:group Constants
-Bitmask values returned in the btns parameter
-of vt_getmouse.
-
-:params
-  VT_MOUSE_BTN_LEFT   = 1  (bit 0)
-  VT_MOUSE_BTN_RIGHT  = 2  (bit 1)
-  VT_MOUSE_BTN_MIDDLE = 4  (bit 2)
-:example
-Dim mb As Long
-vt_getmouse 0, 0, @mb
-If mb And VT_MOUSE_BTN_LEFT Then
-    ' left button is held
-End If
-:see
-vt_getmouse
-vt_mouse
-
-:topic c_misc
-:short Miscellaneous constants
-:group Constants
-General-purpose constants used across the API.
-
-:params
-  VT_DISABLED = 0
-      Generic off/false. Works with any
-      function that accepts an on/off flag.
-  VT_ENABLED  = 1
-      Generic on/true.
-  VT_NEWLINE
-      Chr(10) -- newline for vt_print.
-  VT_LF
-      Short alias for VT_NEWLINE.
-  VT_VIDEO = 0
-      The display page index (always page 0).
-:see
-vt_print
-vt_copypaste
-vt_page
-
-:topic c_mathconsts
-:short Math macros (opt-in: VT_USE_MATH)
-:group Constants
-Available when #define VT_USE_MATH is placed
-before #include once "vt/vt.bi".
-
-NOTE: Macros use IIf() which evaluates both
-sides -- avoid expressions with side effects
-(function calls, increments) as arguments.
-
-:params
-  VT_MIN(a, b)
-      Returns the smaller of two values.
-  VT_MAX(a, b)
-      Returns the larger of two values.
-  VT_CLAMP(v, lo, hi)
-      Clamps v to the range [lo .. hi].
-  VT_SIGN(x)
-      Returns -1, 0, or 1 depending on the
-      sign of x.
-:see
-vt_wrap
-vt_lerp
-vt_approach
-
-:topic c_soundconsts
-:short Sound constants (opt-in: VT_USE_SOUND)
-:group Constants
-Available when #define VT_USE_SOUND is placed
-before #include once "vt/vt.bi".
-
-:params
-  Waveforms (wave parameter of vt_sound):
-  VT_WAVE_SQUARE   = 0  PC speaker / chiptune
-  VT_WAVE_TRIANGLE = 1  NES triangle, soft
-  VT_WAVE_SINE     = 2  Pure sine tone
-  VT_WAVE_NOISE    = 3  15-bit LFSR noise
-
-  Blocking mode (blocking parameter):
-  VT_SOUND_BLOCKING   = 1
-      Wait for the note to finish (default).
-  VT_SOUND_BACKGROUND = 0
-      Queue and return immediately. Use
-      vt_sound_wait to sync.
-:see
-vt_sound
-vt_sound_wait
-
-:topic c_sortconsts
-:short Sort constants (opt-in: VT_USE_SORT)
-:group Constants
-Available when #define VT_USE_SORT is placed
-before #include once "vt/vt.bi".
-
-:params
-  VT_ASCENDING  = 0
-      Sort direction: smallest value first.
-  VT_DESCENDING = 1
-      Sort direction: largest value first.
-:see
-vt_sort
-
 :topic c_tuiconsts
 :short TUI constants (opt-in: VT_USE_TUI)
 :group Constants
@@ -338,85 +78,39 @@ vt_tui_listbox_draw
 vt_tui_menubar_draw
 vt_tui_keymap_default
 
-:topic c_fileflags
-:short File helper flags (opt-in: VT_USE_FILE)
-:group Constants
-Bit-flags for vt_file_copy, vt_file_rmdir,
-and vt_file_list. Combine with Or.
-
-:params
-  VT_FILE_SHOW_HIDDEN = 1
-      vt_file_list: include hidden items.
-  VT_FILE_SHOW_DIRS   = 2
-      vt_file_list: include subdirectory names.
-  VT_FILE_DIRS_ONLY   = 4
-      vt_file_list: only subdirectory names.
-  VT_FILE_OVERWRITE   = 8
-      vt_file_copy: allow overwrite of dst.
-  VT_FILE_RECURSIVE   = 16
-      vt_file_rmdir: delete all contents first.
-      Destructive -- no undo.
-:see
-vt_file_copy
-vt_file_rmdir
-vt_file_list
-
-' ---- group: Initialization ----
-:topic vt_screen
-:short Open or reopen the virtual text screen
+:topic vt_width
+:short Resize the virtual character grid at runtime without closing the window.
 :group Initialization
-Open or reopen the VT window. Calling again
-closes and reinitialises with the new settings.
-Call vt_title before to set the title before
-the window appears. Call vt_scrollback after
-to enable the scrollback buffer. Call
-vt_copypaste after to enable clipboard support.
+Reallocates all page buffers at the new dimensions, destroys and recreates 
+the SDL render buffer, resets the cursor to (1, 1), restores the scroll 
+region to the full screen, and invalidates the scrollback buffer 
+(call vt_scrollback again afterwards if needed). 
+Finishes with vt_cls and vt_present so the cleared screen 
+is visible immediately.
 :syntax
-Function vt_screen(mode  As Long = VT_SCREEN_0, _
-                   flags As Long = VT_WINDOWED, _
-                   pages As Long = 1) As Long
+Function vt_width(cols As Long, rows As Long) As Long
 :params
-mode   Screen mode. One of the VT_SCREEN_*
-       constants. Default VT_SCREEN_0.
-       
-flags  Window flags. VT_WINDOWED,
-       VT_FULLSCREEN_* etc., combined with Or.
-pages  Cell buffer count (1-8). Page 0 is
-       always VT_VIDEO. Extra pages are used
-       with vt_page / vt_pcopy.
-       
-:notes
-Return values:
-   0  success
-  -1  SDL_Init failed
-  -2  SDL window creation failed
-  -3  SDL renderer creation failed
-  -4  font texture creation failed
-  -5  page buffer alloc failed
-  
-  custom modes up to 255x255 cells and 
-  either font 8x8, 8x14 or 8x16
-  use the macro VT_SCREENPARAM(col, row, fw, fh)
-  as mode parameter
-  
+cols  Long  New column count. Clamped to a minimum of 10.
+rows  Long  New row count.    Clamped to a minimum of 3.
+
+Return value
+ 0 - success.
+-1 - library not initialized (vt_screen not called).
+
 :example
-If vt_screen(VT_SCREEN_12, _
-             VT_WINDOWED Or VT_NO_RESIZE) _
-             <> 0 Then
-    Print "Failed to open screen"
-    End 1
-End If
+' Dynamic resize in the main loop:
+Dim nc As Long, nr As Long
+Do
+    k = vt_inkey()
+    If VT_SCAN(k) = VT_KEY_ESC Then Exit Do
 
-'custom mode
-vt_screen VT_SCREENPARAM(80, 10, 8, 8), VT_WINDOWED
+    If vt_screeninfo(nc, nr) Then
+        vt_width nc, nr
+        relayout nc, nr   ' re-draw app at new grid size
+    End If
 
-:see
-vt_shutdown
-vt_title
-vt_scrollback
-vt_copypaste
-c_screenmodes
-c_winflags
+    vt_sleep 16
+Loop
 
 :topic vt_scrollback
 :short Allocate or resize the scrollback buffer
@@ -1602,6 +1296,40 @@ Dim d As Long = vt_rnd(1, 6)
 Dim x As Long = vt_rnd(1, vt_cols())
 :see
 vt_wrap
+
+:topic vt_utf8_to_cp437
+:short Decode a ZTF-8 encoded string to CP437 bytes suitable for vt_print and vt_set_cell.
+:group Utilities
+SDL2 delivers all keyboard and clipboard text as UTF-8; the VT cell buffer stores one raw CP437 byte per cell. This function bridges the two.
+
+Pure ASCII input (no byte ≥ 0x80) is returned unchanged with no allocation. 2-byte and 3-byte UTF-8 sequences are fully supported; continuation bytes are validated before decoding. 4-byte sequences (Unicode beyond the Basic Multilingual Plane) are always dropped as CP437 has no glyphs for them. Codepoints with no CP437 equivalent are silently dropped.
+
+Bytes that do not form a valid UTF-8 sequence — including raw CP437 high bytes such as box-drawing characters from vt_input — are passed through unchanged. This makes the function safe to call on already-decoded CP437 strings as well as on raw UTF-8 input.
+vt_print calls this automatically. Call it explicitly only when you have genuinely UTF-8 encoded text outside of vt_print — for example when writing bytes directly via vt_set_cell, receiving network text, or processing a custom input loop.
+
+Do not call it on vt_input return values. vt_input already returns CP437 bytes (the SDL TEXTINPUT handler decodes them). Calling vt_utf8_to_cp437 on the result is redundant — it is idempotent on CP437 strings, but the call is unnecessary clutter.
+
+:syntax
+Function vt_utf8_to_cp437(src As String) As String
+
+:params
+src	String	Input string. May be UTF-8 (source literals, clipboard, network) or already-decoded CP437 — both are handled correctly.
+
+Return value
+A new string containing the CP437-decoded bytes. Unmappable codepoints are omitted; the result may therefore be shorter than the input. Raw CP437 high bytes (invalid UTF-8) are preserved unchanged.
+
+:example
+' vt_print handles UTF-8 automatically -- just write the string:
+vt_print "Hallo Welt! ae oe ue ss"   ' German umlauts work directly in source
+
+' vt_input already returns CP437 -- no conversion needed:
+Dim result As String = vt_input(30)
+vt_print "You typed: " & result      ' correct as-is
+
+' Explicit call needed only for raw UTF-8 from outside vt_print:
+Dim line As String = receive_from_server()   ' arrives as UTF-8
+line = vt_utf8_to_cp437(line)
+vt_print line
 
 ' ---- group: Sort ----
 :topic vt_sort

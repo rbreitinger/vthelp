@@ -7,7 +7,7 @@
 #cmdline "-s gui -gen gcc -O 2"
 #Include Once "vt/vt.bi"
 
-Const VTH_VERSION = "1.0.4"
+Const VTH_VERSION = "1.0.5"
 ' ------------------------------------------------------------
 ' Layout constants  (VT_SCREEN_120_45)
 ' ------------------------------------------------------------
@@ -446,8 +446,11 @@ Sub hlp_render(ti As Long)
         ' --- Line content based on current section tag ---
         Select Case stag
         Case "syntax", "params", "example"
-            ' Verbatim code line; soft-wrap if longer than content pane
-            rl_verbwrap bln
+            If str_trim(bln) = "" Then
+                rl_blank
+            Else
+                rl_verbwrap bln
+            End If
 
         Case "notes"
             ' Notes treated as reflowed plain text
