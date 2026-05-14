@@ -1,6 +1,5 @@
-
 ' ============================================================
-' VTHELP.BAS  --  DOS-style .vth help file viewer
+' VTHELP.BAS  -  DOS-style .vth help file viewer
 ' Requires: VT library (vt/vt.bi), FreeBASIC 1.10.1
 ' Usage:    vthelp.exe myfile.vth
 ' ============================================================
@@ -9,7 +8,7 @@
 
 Const VTH_VERSION = "1.0.5"
 ' ------------------------------------------------------------
-' Layout constants  (VT_SCREEN_120_45)
+' Layout constants  
 ' ------------------------------------------------------------
 Const HLP_ROWS   = 40                  ' screen rows
 Const HLP_COLS   = 100                 ' screen cols
@@ -336,6 +335,35 @@ Sub rl_verbwrap(src As String)
     If s <> "" Then rl_add s, 1, 0, 0
 End Sub
 
+' Output a notes line preserving source indentation, word-wrapping at HLP_TXT_W.
+' Empty/blank source lines emit a blank render line.
+' Continuation lines re-use the leading indent of src.
+Sub rl_noteswrap(src As String)
+    If str_trim(src) = "" Then
+        rl_blank
+        Exit Sub
+    End If
+    ' Measure leading spaces
+    Dim ind As Long = 0
+    Do While ind < Len(src)
+        If src[ind] <> 32 Then Exit Do
+        ind += 1
+    Loop
+    Dim cont As String = Space(ind)
+    Dim s    As String = src
+    Do While Len(s) > HLP_TXT_W
+        Dim brk As Long = 0
+        Dim ii  As Long
+        For ii = HLP_TXT_W To 1 Step -1
+            If Mid(s, ii, 1) = " " Then brk = ii : Exit For
+        Next
+        If brk = 0 Then brk = HLP_TXT_W   ' no space found: hard break
+        rl_add Left(s, brk), 0, 0, 0
+        s = cont & str_trim(Mid(s, brk + 1))
+    Loop
+    If s <> "" Then rl_add s, 0, 0, 0
+End Sub
+
 ' Feed one word into the word-wrap accumulator
 Sub rl_word(ByRef wbuf As String, wd As String)
     If wd = "" Then Exit Sub
@@ -453,8 +481,8 @@ Sub hlp_render(ti As Long)
             End If
 
         Case "notes"
-            ' Notes treated as reflowed plain text
-            rl_reflow bln, wbuf
+            ' Notes: preserve line breaks and indentation, wrap long lines
+            rl_noteswrap bln
 
         Case "see"
             ' One see-also entry per line
@@ -904,7 +932,7 @@ Do
         vt_view_print HLP_PNL_T, HLP_PNL_B, HLP_CNT_C, HLP_COLS
     End If
 
-    vt_sleep 25
+    vt_sleep(25)
 Loop
 
 vt_shutdown
