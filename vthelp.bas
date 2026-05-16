@@ -7,24 +7,21 @@
 #Define VT_USE_STRINGS
 #Include Once "vt/vt.bi"
 
-Const VTH_VERSION = "1.0.5"
+Const VTH_VERSION = "1.0.6"
 ' ------------------------------------------------------------
 ' Layout constants  
 ' ------------------------------------------------------------
-Const HLP_ROWS     = 40                ' screen rows
-Const HLP_COLS     = 100               ' screen cols
-Const HLP_MIN_ROWS = 20                ' minimum thresholds to
+Const HLP_ROWS     = 30                ' screen rows
+Const HLP_COLS     = 80                ' screen cols
+Const HLP_MIN_ROWS = 25                ' minimum thresholds to
 Const HLP_MIN_COLS = 80                ' not be resized below
 
 Const HLP_IDX_W  = 22                  ' index pane width, cols 1..22
 Const HLP_DIV_C  = 23                  ' divider column
 Const HLP_CNT_C  = 24                  ' content pane first column
-Const HLP_CNT_W  = HLP_COLS- HLP_DIV_C ' content pane width, cols 24..120
-Const HLP_PNL_T  = 2                   ' pane top row (below top bar)
-Const HLP_PNL_B  = HLP_ROWS-1          ' pane bottom row (above bottom bar)
-Const HLP_PNL_H  = HLP_ROWS-2          ' HLP_PNL_B - HLP_PNL_T + 1
+Const HLP_PNL_T  = 2                   ' pane top row (below top bar) -- fixed
 Const HLP_BACK_M = 32                  ' maximum back-stack depth
-Const HLP_TXT_W  = HLP_CNT_W-2         ' usable reflow width inside content pane
+' g_cnt_w, g_pnl_b, g_pnl_h, g_txt_w are dynamic -- see relayout()
 
 ' ------------------------------------------------------------
 ' Color constants
@@ -109,8 +106,12 @@ Dim Shared idx_sel   As Long        ' selected flat-list entry
 Dim Shared idx_top   As Long        ' index pane scroll offset
 Dim Shared hlp_disp  As String      ' filename shown in top bar
 
-Dim Shared g_cols    As Long = HLP_COLS  ' initialize screen defaults
-Dim Shared g_rows    As Long = HLP_ROWS
+Dim Shared g_cols    As Long = HLP_COLS                 ' current screen cols (updated on resize)
+Dim Shared g_rows    As Long = HLP_ROWS                 ' current screen rows
+Dim Shared g_cnt_w   As Long = HLP_COLS - HLP_DIV_C     ' content pane width (cols HLP_DIV_C+1 .. g_cols)
+Dim Shared g_pnl_b   As Long = HLP_ROWS - 1             ' pane bottom row (above bottom bar)
+Dim Shared g_pnl_h   As Long = HLP_ROWS - 2             ' pane height in rows
+Dim Shared g_txt_w   As Long = HLP_COLS - HLP_DIV_C - 2 ' usable reflow width inside content pane
 
 ' ============================================================
 ' Utility helpers
@@ -307,28 +308,28 @@ Sub rl_flush(ByRef wbuf As String)
     wbuf = ""
 End Sub
 
-' Output a verbatim code line, word-wrapping at HLP_TXT_W.
+' Output a verbatim code line, word-wrapping at g_txt_w.
 ' Searches backwards for the last space so words are never split.
 ' Continuation lines are indented 8 spaces (one tab stop) so they align
 ' naturally under the description column of name-padded param blocks.
 Sub rl_verbwrap(src As String)
     Dim s    As String = src
     Dim cont As String = Space(8)
-    Do While Len(s) > HLP_TXT_W
+    Do While Len(s) > g_txt_w
         ' Find last space at or before the wrap column
         Dim brk As Long = 0
         Dim ii  As Long
-        For ii = HLP_TXT_W To 1 Step -1
+        For ii = g_txt_w To 1 Step -1
             If Mid(s, ii, 1) = " " Then brk = ii : Exit For
         Next
-        If brk = 0 Then brk = HLP_TXT_W   ' no space found: hard break
+        If brk = 0 Then brk = g_txt_w   ' no space found: hard break
         rl_add Left(s, brk), 1, 0, 0
         s = cont & vt_str_trim_chars(Mid(s, brk + 1), " " & Chr(9))
     Loop
     If s <> "" Then rl_add s, 1, 0, 0
 End Sub
 
-' Output a notes line preserving source indentation, word-wrapping at HLP_TXT_W.
+' Output a notes line preserving source indentation, word-wrapping at g_txt_w.
 ' Empty/blank source lines emit a blank render line.
 ' Continuation lines re-use the leading indent of src.
 Sub rl_noteswrap(src As String)
@@ -344,13 +345,13 @@ Sub rl_noteswrap(src As String)
     Loop
     Dim cont As String = Space(ind)
     Dim s    As String = src
-    Do While Len(s) > HLP_TXT_W
+    Do While Len(s) > g_txt_w
         Dim brk As Long = 0
         Dim ii  As Long
-        For ii = HLP_TXT_W To 1 Step -1
+        For ii = g_txt_w To 1 Step -1
             If Mid(s, ii, 1) = " " Then brk = ii : Exit For
         Next
-        If brk = 0 Then brk = HLP_TXT_W   ' no space found: hard break
+        If brk = 0 Then brk = g_txt_w   ' no space found: hard break
         rl_add Left(s, brk), 0, 0, 0
         s = cont & vt_str_trim_chars(Mid(s, brk + 1), " " & Chr(9))
     Loop
@@ -362,7 +363,7 @@ Sub rl_word(ByRef wbuf As String, wd As String)
     If wd = "" Then Exit Sub
     If wbuf = "" Then
         wbuf = wd
-    ElseIf Len(wbuf) + 1 + Len(wd) <= HLP_TXT_W Then
+    ElseIf Len(wbuf) + 1 + Len(wd) <= g_txt_w Then
         wbuf &= " " & wd
     Else
         rl_add wbuf, 0, 0, 0
@@ -418,7 +419,7 @@ Sub hlp_render(ti As Long)
 
     ' --- Header block: title + short + blank ---
     rl_add topics(ti).tname, 0, 1, 0
-    If topics(ti).tshort <> "" Then rl_add topics(ti).tshort, 0, 0, 0
+    If topics(ti).tshort <> "" Then rl_noteswrap topics(ti).tshort
     rl_blank
 
     ' --- Body pass ---
@@ -448,7 +449,7 @@ Sub hlp_render(ti As Long)
             ' Blank line before section header (deduped by rl_blank)
             rl_blank
 
-            ' Build header text: name + fill dashes to HLP_CNT_W
+            ' Build header text: name + fill dashes to g_cnt_w
             Dim hdr As String
             Select Case stag
             Case "syntax"  : hdr = " Syntax "
@@ -458,7 +459,7 @@ Sub hlp_render(ti As Long)
             Case "see"     : hdr = " See also "
             Case Else      : hdr = " " & stag & " "
             End Select
-            Dim fill As Long = HLP_CNT_W - Len(hdr)
+            Dim fill As Long = g_cnt_w - Len(hdr)
             If fill < 0 Then fill = 0
             rl_add hdr & String(fill, Chr(196)), 0, 1, 0
             Continue Do
@@ -507,7 +508,7 @@ Sub hlp_goto(ti As Long)
     hlp_render ti
     idx_sel = ilst_find(ti)
     If idx_sel < idx_top Then idx_top = idx_sel
-    If idx_sel >= idx_top + HLP_PNL_H Then idx_top = idx_sel - HLP_PNL_H + 1
+    If idx_sel >= idx_top + g_pnl_h Then idx_top = idx_sel - g_pnl_h + 1
     If idx_top < 0 Then idx_top = 0
 End Sub
 
@@ -530,7 +531,7 @@ Sub hlp_back()
     Dim saved_tl As Long = bstk(bstk_d).topln
     hlp_goto bstk(bstk_d).tidx
     ' Restore the previous scroll offset (hlp_goto resets it to 0)
-    Dim max_tl As Long = nrlines - HLP_PNL_H
+    Dim max_tl As Long = nrlines - g_pnl_h
     If max_tl < 0 Then max_tl = 0
     top_ln = saved_tl
     If top_ln > max_tl Then top_ln = max_tl
@@ -541,7 +542,7 @@ End Sub
 ' ============================================================
 
 Sub scroll_cnt(delta As Long)
-    Dim max_tl As Long = nrlines - HLP_PNL_H
+    Dim max_tl As Long = nrlines - g_pnl_h
     If max_tl < 0 Then max_tl = 0
     top_ln += delta
     If top_ln > max_tl Then top_ln = max_tl
@@ -549,7 +550,7 @@ Sub scroll_cnt(delta As Long)
 End Sub
 
 Sub scroll_idx(delta As Long)
-    Dim max_it As Long = nilst - HLP_PNL_H
+    Dim max_it As Long = nilst - g_pnl_h
     If max_it < 0 Then max_it = 0
     idx_top += delta
     If idx_top > max_it Then idx_top = max_it
@@ -562,8 +563,8 @@ Sub lnk_ensure_visible(li As Long)
     Dim ri As Long = lnks(li).ridx
     If ri < top_ln Then
         top_ln = ri
-    ElseIf ri >= top_ln + HLP_PNL_H Then
-        top_ln = ri - HLP_PNL_H + 1
+    ElseIf ri >= top_ln + g_pnl_h Then
+        top_ln = ri - g_pnl_h + 1
     End If
 End Sub
 
@@ -581,7 +582,7 @@ Sub idx_move(direction As Long)
     Loop
     idx_sel = ns
     If idx_sel < idx_top Then idx_top = idx_sel
-    If idx_sel >= idx_top + HLP_PNL_H Then idx_top = idx_sel - HLP_PNL_H + 1
+    If idx_sel >= idx_top + g_pnl_h Then idx_top = idx_sel - g_pnl_h + 1
     If idx_top < 0 Then idx_top = 0
     ' Preview the newly highlighted topic in the content pane (no back-stack push)
     If idx_sel <> orig Then
@@ -592,6 +593,31 @@ Sub idx_move(direction As Long)
 End Sub
 
 ' ============================================================
+' Resize / relayout
+' ============================================================
+
+Sub relayout(nc As Long, nr As Long)
+    g_cols  = nc
+    g_rows  = nr
+    g_cnt_w = g_cols - HLP_DIV_C
+    g_pnl_b = g_rows - 1
+    g_pnl_h = g_rows - 2
+    g_txt_w = g_cnt_w - 2
+    ' Re-render content for new wrap width; preserve scroll position
+    Dim saved_tl As Long = top_ln
+    hlp_render cur_top
+    Dim max_tl As Long = nrlines - g_pnl_h
+    If max_tl < 0 Then max_tl = 0
+    top_ln = saved_tl
+    If top_ln > max_tl Then top_ln = max_tl
+    ' Clamp index scroll
+    Dim max_it As Long = nilst - g_pnl_h
+    If max_it < 0 Then max_it = 0
+    If idx_top > max_it Then idx_top = max_it
+    If idx_top < 0     Then idx_top = 0
+End Sub
+
+' ============================================================
 ' Drawing routines
 ' ============================================================
 
@@ -599,11 +625,11 @@ End Sub
 Sub draw_bar(row As Long, ltxt As String, rtxt As String)
     vt_color C_BAR_F, C_BAR_B
     vt_locate row, 1
-    vt_print Space(HLP_COLS)
+    vt_print Space(g_cols)
     vt_locate row, 2
     vt_print ltxt
     If rtxt <> "" Then
-        vt_locate row, HLP_COLS - Len(rtxt) - 1
+        vt_locate row, g_cols - Len(rtxt) - 1
         vt_print rtxt
     End If
 End Sub
@@ -613,11 +639,11 @@ Sub draw_chrome()
     draw_bar 1, "[ VTHELP " & VTH_VERSION & "]", "[ " & hlp_disp & " ]"
     
     ' Bottom bar: key hints
-    draw_bar HLP_ROWS, "F1 Index  F2 Content  Tab/S+Tab Links  PgUp/PgDn  ESC Back", ""
+    draw_bar g_rows, "F1 Index  F2 Content  Tab/S+Tab Links  PgUp/PgDn  ESC Back", ""
     ' Vertical divider between index and content panes
     vt_color C_BODY, C_BG
     Dim rr As Long
-    For rr = HLP_PNL_T To HLP_PNL_B
+    For rr = HLP_PNL_T To g_pnl_b
         vt_locate rr, HLP_DIV_C
         vt_print Chr(179)
     Next
@@ -625,7 +651,7 @@ End Sub
 
 Sub draw_index()
     Dim rr As Long
-    For rr = 0 To HLP_PNL_H - 1
+    For rr = 0 To g_pnl_h - 1
         Dim ei  As Long = idx_top + rr
         Dim row As Long = HLP_PNL_T + rr
         vt_locate row, 1
@@ -662,14 +688,14 @@ End Sub
 
 Sub draw_content()
     Dim rr As Long
-    For rr = 0 To HLP_PNL_H - 1
+    For rr = 0 To g_pnl_h - 1
         Dim li  As Long = top_ln + rr
         Dim row As Long = HLP_PNL_T + rr
         vt_locate row, HLP_CNT_C
 
         If li < 0 Or li >= nrlines Then
             vt_color C_BODY, C_BG
-            vt_print Space(HLP_CNT_W)
+            vt_print Space(g_cnt_w)
             Continue For
         End If
 
@@ -685,22 +711,22 @@ Sub draw_content()
         If li = 0 Then
             ' Topic title -- first render line, always line index 0
             vt_color C_TITLE, C_BG
-            vt_print Left(" " & rlines(li).txt & Space(HLP_CNT_W), HLP_CNT_W)
+            vt_print Left(" " & rlines(li).txt & Space(g_cnt_w), g_cnt_w)
 
         ElseIf rlines(li).is_head Then
-            ' Section header (already HLP_CNT_W chars from renderer)
+            ' Section header (already g_cnt_w chars from renderer)
             vt_color C_SEC, C_BG
-            vt_print Left(rlines(li).txt & Space(HLP_CNT_W), HLP_CNT_W)
+            vt_print Left(rlines(li).txt & Space(g_cnt_w), g_cnt_w)
 
         ElseIf rlines(li).is_code Then
             ' Verbatim code line
             vt_color C_CODE, C_BG
-            vt_print Left(" " & rlines(li).txt & Space(HLP_CNT_W), HLP_CNT_W)
+            vt_print Left(" " & rlines(li).txt & Space(g_cnt_w), g_cnt_w)
 
         ElseIf rlines(li).is_link Then
             ' See-also link entry
             vt_color C_LINK, C_BG
-            vt_print Left(" " & rlines(li).txt & Space(HLP_CNT_W), HLP_CNT_W)
+            vt_print Left(" " & rlines(li).txt & Space(g_cnt_w), g_cnt_w)
             ' Overdraw focused link name with highlight color
             If frow Then
                 Dim lnm As String = Mid(rlines(li).txt, fcs, fce - fcs + 1)
@@ -713,7 +739,7 @@ Sub draw_content()
         Else
             ' Normal body text
             vt_color C_BODY, C_BG
-            vt_print Left(" " & rlines(li).txt & Space(HLP_CNT_W), HLP_CNT_W)
+            vt_print Left(" " & rlines(li).txt & Space(g_cnt_w), g_cnt_w)
         End If
     Next
 End Sub
@@ -722,7 +748,7 @@ End Sub
 ' Mouse click handler
 ' ============================================================
 Sub handle_click(mx As Long, my As Long)
-    If my < HLP_PNL_T Or my > HLP_PNL_B Then Exit Sub
+    If my < HLP_PNL_T Or my > g_pnl_b Then Exit Sub
     Dim roff As Long = my - HLP_PNL_T
 
     If mx >= 1 And mx <= HLP_IDX_W Then
@@ -737,7 +763,7 @@ Sub handle_click(mx As Long, my As Long)
             End If
         End If
 
-    ElseIf mx >= HLP_CNT_C And mx <= HLP_COLS Then
+    ElseIf mx >= HLP_CNT_C And mx <= g_cols Then
         ' ---- Content pane click ----
         cur_pane = 1
         ' Hit-test against visible links
@@ -745,7 +771,7 @@ Sub handle_click(mx As Long, my As Long)
         For li = 0 To nlnks - 1
             ' Screen row of this link
             Dim lscr As Long = HLP_PNL_T + (lnks(li).ridx - top_ln)
-            If lscr < HLP_PNL_T Or lscr > HLP_PNL_B Then Continue For
+            If lscr < HLP_PNL_T Or lscr > g_pnl_b Then Continue For
             If lscr <> my Then Continue For
             ' Column range: HLP_CNT_C + col_start .. HLP_CNT_C + col_end
             ' (because draw_content prints " " & txt at HLP_CNT_C)
@@ -794,6 +820,7 @@ if vt_screen(VT_SCREENPARAM(HLP_COLS, HLP_ROWS), VT_WINDOWED ) <> 0 Then
     Print "vthelp: vt_screen failed"
     End 1
 End If
+vt_screen_minimum HLP_MIN_COLS, HLP_MIN_ROWS
 vt_mouse 1
 vt_copypaste VT_ENABLED
 vt_locate ,,0    ' hide cursor; vthelp draws its own selection
@@ -811,8 +838,15 @@ hlp_goto 0
 Dim kk   As ULong
 Dim mx   As Long, my As Long, mb As Long, mw As Long
 Dim pmb  As Long = 0     ' previous mouse button state (for edge detection)
+Dim nc   As Long, nr As Long
 
 Do
+    ' --- Resize check ---
+    If vt_screeninfo(nc, nr) Then
+        vt_width nc, nr
+        relayout nc, nr
+    End If
+
     kk = vt_inkey()
     vt_getmouse @mx, @my, @mb, @mw
 
@@ -849,7 +883,7 @@ Do
             If fi < nilst Then
                 idx_sel = fi
                 If idx_sel < idx_top Then idx_top = idx_sel
-                If idx_sel >= idx_top + HLP_PNL_H Then idx_top = idx_sel - HLP_PNL_H + 1
+                If idx_sel >= idx_top + g_pnl_h Then idx_top = idx_sel - g_pnl_h + 1
             End If
 
         Case VT_KEY_F2
@@ -879,10 +913,10 @@ Do
             If cur_pane = 0 Then idx_move 1 Else scroll_cnt 1
 
         Case VT_KEY_PGUP
-            If cur_pane = 0 Then scroll_idx -HLP_PNL_H Else scroll_cnt -HLP_PNL_H
+            If cur_pane = 0 Then scroll_idx -g_pnl_h Else scroll_cnt -g_pnl_h
 
         Case VT_KEY_PGDN
-            If cur_pane = 0 Then scroll_idx HLP_PNL_H Else scroll_cnt HLP_PNL_H
+            If cur_pane = 0 Then scroll_idx g_pnl_h Else scroll_cnt g_pnl_h
 
         Case VT_KEY_HOME
             If cur_pane = 0 Then idx_top = 0 Else top_ln = 0
@@ -920,9 +954,9 @@ Do
 
     ' Leave viewport set to active pane - mouse copy-paste inherits it
     If cur_pane = 0 Then
-        vt_view_print HLP_PNL_T, HLP_PNL_B, 1, HLP_IDX_W
+        vt_view_print HLP_PNL_T, g_pnl_b, 1, HLP_IDX_W
     Else
-        vt_view_print HLP_PNL_T, HLP_PNL_B, HLP_CNT_C, HLP_COLS
+        vt_view_print HLP_PNL_T, g_pnl_b, HLP_CNT_C, g_cols
     End If
 
     vt_sleep(25)

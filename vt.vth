@@ -3316,8 +3316,8 @@ position; any vt_locate after it moves the cursor
 to the wrong place before vt_sleep flips the frame.
 Opt-in: define VT_USE_TUI before the include.
 :syntax
-Sub vt_tui_editor_draw(x   As Long, y   As Long,
-                       wid As Long, hei As Long,
+Sub vt_tui_editor_draw(x   As Long, y   As Long, _
+                       wid As Long, hei As Long, _
                        ByRef st As _
                        vt_tui_editor_state)
                        

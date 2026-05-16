@@ -3,4 +3,5 @@ Thumbs.db
 *.exe
 *.fbs
 *.zip
+*.bak
 int_*.*
