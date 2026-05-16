@@ -3,15 +3,18 @@
 ' Requires: VT library (vt/vt.bi), FreeBASIC 1.10.1
 ' Usage:    vthelp.exe myfile.vth
 ' ============================================================
-#cmdline "-s gui -gen gcc -O 2"
+#cmdline "-s gui -arch native -gen gcc -O 1"
 #Include Once "vt/vt.bi"
 
 Const VTH_VERSION = "1.0.5"
 ' ------------------------------------------------------------
 ' Layout constants  
 ' ------------------------------------------------------------
-Const HLP_ROWS   = 40                  ' screen rows
-Const HLP_COLS   = 100                 ' screen cols
+Const HLP_ROWS     = 40                ' screen rows
+Const HLP_COLS     = 100               ' screen cols
+Const HLP_MIN_ROWS = 20                ' minimum thresholds to
+Const HLP_MIN_COLS = 80                ' not be resized below
+
 Const HLP_IDX_W  = 22                  ' index pane width, cols 1..22
 Const HLP_DIV_C  = 23                  ' divider column
 Const HLP_CNT_C  = 24                  ' content pane first column
@@ -104,6 +107,9 @@ Dim Shared cur_pane  As Long        ' 0 = index pane, 1 = content pane
 Dim Shared idx_sel   As Long        ' selected flat-list entry
 Dim Shared idx_top   As Long        ' index pane scroll offset
 Dim Shared hlp_disp  As String      ' filename shown in top bar
+
+Dim Shared g_cols    As Long = HLP_COLS  ' initialize screen defaults
+Dim Shared g_rows    As Long = HLP_ROWS
 
 ' ============================================================
 ' Utility helpers
@@ -797,7 +803,7 @@ bstk_d = 0
 
 ' --- Initialise VT ---
 vt_title "VTHELP"
-if vt_screen(HLP_COLS+(HLP_ROWS shl 8), VT_WINDOWED ) <> 0 Then
+if vt_screen(VT_SCREENPARAM(HLP_COLS, HLP_ROWS), VT_WINDOWED ) <> 0 Then
     Print "vthelp: vt_screen failed"
     End 1
 End If
