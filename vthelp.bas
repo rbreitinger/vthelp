@@ -4,6 +4,7 @@
 ' Usage:    vthelp.exe myfile.vth
 ' ============================================================
 #cmdline "-s gui -arch native -gen gcc -O 1"
+#Define VT_USE_STRINGS
 #Include Once "vt/vt.bi"
 
 Const VTH_VERSION = "1.0.5"
@@ -115,20 +116,6 @@ Dim Shared g_rows    As Long = HLP_ROWS
 ' Utility helpers
 ' ============================================================
 
-Function str_trim(s As String) As String
-    Dim i As Long = 1, j As Long = Len(s)
-    Do While i <= j
-        Dim ch As UByte = s[i - 1]
-        If ch = 32 Or ch = 9 Then i += 1 Else Exit Do
-    Loop
-    Do While j >= i
-        Dim ch As UByte = s[j - 1]
-        If ch = 32 Or ch = 9 Then j -= 1 Else Exit Do
-    Loop
-    If i > j Then Return ""
-    Return Mid(s, i, j - i + 1)
-End Function
-
 Function path_base(p As String) As String
     Dim i As Long
     For i = Len(p) To 1 Step -1
@@ -211,7 +198,7 @@ Sub hlp_load(fname As String)
                 rest = ""
             Else
                 stag = LCase(Mid(fln, 2, sp - 2))
-                rest = str_trim(Mid(fln, sp + 1))
+                rest = vt_str_trim_chars(Mid(fln, sp + 1), " " & Chr(9))
             End If
 
             ' Inside :example only :topic is special;
@@ -336,7 +323,7 @@ Sub rl_verbwrap(src As String)
         Next
         If brk = 0 Then brk = HLP_TXT_W   ' no space found: hard break
         rl_add Left(s, brk), 1, 0, 0
-        s = cont & str_trim(Mid(s, brk + 1))
+        s = cont & vt_str_trim_chars(Mid(s, brk + 1), " " & Chr(9))
     Loop
     If s <> "" Then rl_add s, 1, 0, 0
 End Sub
@@ -345,7 +332,7 @@ End Sub
 ' Empty/blank source lines emit a blank render line.
 ' Continuation lines re-use the leading indent of src.
 Sub rl_noteswrap(src As String)
-    If str_trim(src) = "" Then
+    If vt_str_trim_chars(src, " " & Chr(9)) = "" Then
         rl_blank
         Exit Sub
     End If
@@ -365,7 +352,7 @@ Sub rl_noteswrap(src As String)
         Next
         If brk = 0 Then brk = HLP_TXT_W   ' no space found: hard break
         rl_add Left(s, brk), 0, 0, 0
-        s = cont & str_trim(Mid(s, brk + 1))
+        s = cont & vt_str_trim_chars(Mid(s, brk + 1), " " & Chr(9))
     Loop
     If s <> "" Then rl_add s, 0, 0, 0
 End Sub
@@ -386,7 +373,7 @@ End Sub
 ' Reflow a single source line into the word accumulator.
 ' Blank source lines flush + add a paragraph-break blank render line.
 Sub rl_reflow(src As String, ByRef wbuf As String)
-    Dim s As String = str_trim(src)
+    Dim s As String = vt_str_trim_chars(src, " " & Chr(9))
     If s = "" Then
         rl_flush wbuf
         rl_blank
@@ -480,7 +467,7 @@ Sub hlp_render(ti As Long)
         ' --- Line content based on current section tag ---
         Select Case stag
         Case "syntax", "params", "example"
-            If str_trim(bln) = "" Then
+            If vt_str_trim_chars(bln, " " & Chr(9)) = "" Then
                 rl_blank
             Else
                 rl_verbwrap bln
@@ -492,7 +479,7 @@ Sub hlp_render(ti As Long)
 
         Case "see"
             ' One see-also entry per line
-            Dim strim As String = str_trim(bln)
+            Dim strim As String = vt_str_trim_chars(bln, " " & Chr(9))
             If strim <> "" Then
                 Dim ltxt As String = "  " & Chr(17) & " " & strim & " " & Chr(16)
                 rl_add ltxt, 0, 0, 1
