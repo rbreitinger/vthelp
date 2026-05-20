@@ -3,11 +3,11 @@
 ' Requires: VT library (vt/vt.bi), FreeBASIC 1.10.1
 ' Usage:    vthelp.exe myfile.vth
 ' ============================================================
-#cmdline "-s gui -arch native -gen gcc -O 1"
+#cmdline "-s gui -arch native -gen gcc -O 3"
 #Define VT_USE_STRINGS
 #Include Once "vt/vt.bi"
 
-Const VTH_VERSION = "1.0.6"
+Const VTH_VERSION = "1.0.7"
 ' ------------------------------------------------------------
 ' Layout constants  
 ' ------------------------------------------------------------

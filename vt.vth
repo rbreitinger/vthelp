@@ -52,10 +52,8 @@ vt_color
 :topic c_colors
 :short Color index constants (0-15 + VT_BLINK)
 :group Constants
-Used with vt_color, vt_cls, vt_set_cell etc.
-These are VT_COLOR_IDX enum values 0-15.
-OR any foreground color with VT_BLINK (16)
-to enable character blinking.
+Used with vt_color, vt_cls, vt_set_cell etc. These are VT_COLOR_IDX enum values 0-15.
+OR any foreground color with VT_BLINK (16) to enable character blinking.
 
 :params
 Enum
@@ -93,19 +91,14 @@ vt_set_cell
 :topic c_keymacros
 :short Key-event extraction macros
 :group Constants
-vt_inkey and vt_getkey return a packed ULong.
-Use these macros to extract fields from it.
+vt_inkey and vt_getkey return a packed ULong. Use these macros to extract fields from it.
 
 :params
 #Define VT_CHAR(k)    ((k) And &hFF)
-  ASCII code of the resulting character
-  (Ctrl+letter gives 1-26). 0 for special
-  keys -- use VT_SCAN for those.
+  ASCII code of the resulting character (Ctrl+letter gives 1-26). 0 for special keys - use VT_SCAN for those.
 
 #Define VT_SCAN(k)    (((k) Shr 16) And &hFFF)
-  VT scancode (bits 16-27). Only meaningful
-  for VT_KEY_* constants. Returns 0 for
-  regular letter/digit/symbol keys.
+  VT scancode (bits 16-27). Only meaningful for VT_KEY_* constants. Returns 0 for regular letter/digit/symbol keys.
   Always compare via this macro.
 
 #Define VT_REPEAT(k)  (((k) Shr 28) And 1)
@@ -138,9 +131,7 @@ c_keyscans
 :topic c_keyscans
 :short VT_KEY_* scancode constants
 :group Constants
-Compare these against VT_SCAN(k). Never
-compare them directly against the raw ULong
-value returned by vt_inkey.
+Compare these against VT_SCAN(k). Never compare them directly against the raw ULong value returned by vt_inkey.
 :params
 F-keys:
 Const VT_KEY_F1     = 59
@@ -220,7 +211,7 @@ vt_approach
 :group Constants
 Miscellaneous library constants
 :params
-Const   VT_VERSION   = "1.10.0"   ' major.minor.patch
+Const   VT_VERSION   = "1.11.0"   ' major.minor.patch
 #Define VT_VER_MAJOR = 1          ' preprocessor Versioning
 #Define VT_VER_MINOR = 10
 #Define VT_VER_PATCH = 0
@@ -238,8 +229,7 @@ vt_pcopy
 :topic c_mousebtns
 :short Mouse button bitmask constants
 :group Constants
-Bitmask values returned in the btns parameter
-of vt_getmouse.
+Bitmask values returned in the btns parameter of vt_getmouse.
 :params
 Const VT_MOUSE_BTN_LEFT   = 1   ' bit 0
 Const VT_MOUSE_BTN_RIGHT  = 2   ' bit 1
@@ -257,9 +247,7 @@ vt_mouse
 :topic c_screenmodes
 :short Screen mode constants for vt_screen
 :group Constants
-Passed as the mode argument to vt_screen.
-VT_SCREEN_TILES uses 8x8 font data scaled to
-16x16 glyphs -- useful for square-cell tiles.
+Passed as the mode argument to vt_screen. VT_SCREEN_TILES uses 8x8 font data scaled to 16x16 glyphs - useful for square-cell tiles.
 :params
 Const VT_SCREEN_0       = 0   ' 80x25  8x16  640x400 - VGA text (default)
 Const VT_SCREEN_2       = 2   ' 80x25  8x8   640x200 - CGA hi-res text grid
@@ -283,10 +271,10 @@ VT_SCREENPARAM(col, row, fontwid, fonthei)
   fontwid and fonthei select the destination glyph cell size in pixels.
 
   Scaled font support:
-  fontwid must be a multiple of 8.
-  The library derives scale = fontwid \ 8 and base_gh = fonthei \ scale.
-  base_gh must equal 8, 14, or 16 (a built-in source font).
-  Invalid combinations silently fall back to the 8×16 source at scale 1.
+    fontwid must be a multiple of 8.
+    The library derives scale = fontwid \ 8 and base_gh = fonthei \ scale.
+    base_gh must equal 8, 14, or 16 (a built-in source font).
+    Invalid combinations silently fall back to the 8×16 source at scale 1.
 
 :see
 vt_screen
@@ -354,8 +342,22 @@ joined with CRLF.
 vt_screen(VT_SCREEN_0)
 vt_copypaste(VT_ENABLED)
 :see
+vt_set_clipboard_text
 vt_screen
 vt_input
+hk_copypaste
+
+:topic vt_set_clipboard_text
+:short copies the content of a string into the clipboard
+:group Copy/Paste
+Copies the content of a string into the clipboard. It converts from codepage to utf8
+:syntax
+Sub vt_set_clipboard_text(txt As String, codepage As Long = CP437)
+:params
+    txt        the string to copy
+    codepage   codepage to translate from (default = CP437)
+:see
+vt_copypaste
 hk_copypaste
 
 :topic vt_border_color
@@ -611,17 +613,9 @@ fileflags
 :topic vt_bload
 :short Load a .vts screen file into the work page
 :group File I/O
-Load a .vts file into the active work page.
-Validates the magic and screen dimensions before
-touching the cell buffer. Sets the display dirty
-on success so the next vt_present reflects the
-loaded content. Unaffected by any viewport -
-always loads the full screen.
+Load a .vts file into the active work page. Validates the magic and screen dimensions before touching the cell buffer. Sets the display dirty
+on success so the next vt_present reflects the loaded content. Unaffected by any viewport - always loads the full screen.
 
-The .vts format: 4-byte magic "VTBS", 4-byte
-cols, 4-byte rows (all little-endian Long),
-followed by cols x rows x 3 bytes (ch, fg, bg
-per cell, left-to-right, top-to-bottom).
 :syntax
 Function vt_bload(fname As String) As Long
 :params
@@ -633,6 +627,12 @@ Return values:
   -2  file could not be opened
   -3  bad magic -- not a valid .vts file
   -4  dimension mismatch (different screen mode)
+
+The .vts format:
+   4-byte magic "VTBS"
+   4-byte cols
+   4-byte rows (all little-endian Long),
+   followed by cols x rows x 3 bytes (ch, fg, bg per cell, left-to-right, top-to-bottom).
 :example
 If vt_file_exists("savegame.vts") Then
     If vt_bload("savegame.vts") = 0 Then
@@ -646,14 +646,11 @@ vt_file_exists
 :topic vt_bsave
 :short Save the work page to a .vts file
 :group File I/O
-Save the active work page to a .vts file.
-Unaffected by any viewport -- always saves the
-full screen. Created or overwritten.
+Save the active work page to a .vts file. Unaffected by any viewport. Always saves the full screen. Created or overwritten.
 :syntax
 Function vt_bsave(fname As String) As Long
 :params
-fname  Destination file path. Created or
-       overwritten if it exists.
+fname  Destination file path. Created or overwritten if it exists.
 :notes
 Return values:
    0  success
@@ -757,13 +754,9 @@ vt_sleep
 :topic hk_alt
 :short Alt+letter intercept for the TUI menubar
 :group Hotkeys
-VT intercepts Alt+letter combinations before
-they reach your program and delivers them to
-the TUI menubar. The key event arrives with
-VT_ALT(k) = 1 and VT_CHAR(k) set to the
-letter that was pressed. Used by
-vt_tui_menubar_draw to open a menu group by
-its first letter.
+VT intercepts Alt+letter combinations before they reach your program and delivers them to the TUI menubar.
+The key event arrives with VT_ALT(k) = 1 and VT_CHAR(k) set to the letter that was pressed. Used by
+vt_tui_menubar_draw to open a menu group by its first letter.
 :see
 vt_tui_menubar_draw
 c_keymacros
@@ -772,8 +765,7 @@ hk_copypaste
 :topic hk_copypaste
 :short Internal copy/paste key and mouse bindings
 :group Hotkeys
-Available only when vt_copypaste has been called
-to enable it.
+Available only when vt_copypaste has been called to enable it.
 
   LMB drag        Select a region. Activates
                   only once the mouse moves.
@@ -792,10 +784,8 @@ hk_alt
 :topic hk_scrollback
 :short Internal scrollback navigation key bindings
 :group Hotkeys
-VT intercepts these combinations before they
-reach your program. Scrollback must be enabled
-with vt_scrollback for these to have any effect.
-Any key not listed below exits scrollback and
+VT intercepts these combinations before they reach your program. Scrollback must be enabled
+with vt_scrollback/vt_scroll_enable for these to have any effect. Any key not listed below exits scrollback and
 returns to the live view.
 
   Shift+PgUp       Scroll back 1 line
@@ -805,6 +795,7 @@ returns to the live view.
 :see
 vt_scrollback
 vt_scroll
+vt_scroll_enable
 
 :topic vt_on_close
 :short Register a callback for the [X] button
@@ -927,12 +918,9 @@ vt_width
 :topic vt_scrollback
 :short Allocate or resize the scrollback buffer
 :group Initialization
-Allocate, resize, or disable the scrollback
-history buffer. Must be called after vt_screen.
-Calling it again clears any existing history.
-Scrollback captures lines scrolled off the top
-of the scroll region. See the Hotkeys section
-for the key bindings that activate scrollback.
+Allocate, resize, or disable the scrollback history buffer. Must be called after vt_screen.
+Calling it again clears any existing history. Scrollback captures lines scrolled off the top
+of the scroll region. See the Hotkeys section for the key bindings that activate scrollback.
 :syntax
 Sub vt_scrollback(lines As Long)
 :params
@@ -942,6 +930,7 @@ lines  History lines to keep. Pass 0 to
 vt_screen
 vt_scroll
 hk_scrollback
+vt_scroll_enable
 
 :topic vt_shutdown
 :short Tear down the library and free resources
@@ -1089,14 +1078,9 @@ c_keyscans
 :topic vt_input
 :short Full-featured blocking single-line editor
 :group Keyboard
-Blocking single-line text editor at the current
-cursor position. Supports Home, End, Left, Right,
-Insert, Delete, Backspace, and clipboard paste
-when copy/paste is enabled. Returns the entered
-string on Enter, or "" on Escape. Colour must
-be set with vt_color before calling. The editor
-does not call vt_present directly; internal
-vt_inkey calls handle presentation.
+Blocking single-line text editor at the current cursor position. Supports Home, End, Left, Right,
+Insert, Delete, Backspace, and clipboard paste when copy/paste is enabled. Returns the entered
+string on Enter, or "" on Escape. Colour must be set with vt_color before calling.
 :syntax
 Function vt_input(max_len   As Long = -1, _
                   initial   As String = "", _
@@ -1113,17 +1097,19 @@ allowed   Whitelist of accepted characters.
 cancelled Optional Byte Ptr. Set to 1 on Escape,
           0 on Enter. Pass 0 to ignore.
 :example
+#Include Once "vt/vt.bi"
+vt_screen()
 Dim esc As Byte
 vt_locate(10, 1)
 vt_print("Enter amount: ")
-Dim amount As String = _
-    vt_input(8, "0", "0123456789.", @esc)
+Dim amount As String = vt_input(8, "0", "0123456789.", @esc)
 If esc Then
     vt_print("Cancelled" & VT_LF)
 Else
     vt_print("Got: " & amount & VT_LF)
 End If
-vt_present()
+vt_sleep()
+vt_shutdown()
 :see
 vt_getchar
 vt_getkey
@@ -2155,14 +2141,10 @@ vt_tls_recv
 :topic vt_page
 :short Set the active draw and display page
 :group Pages
-Set the active drawing page and the visible
-display page independently. All drawing commands
-write to the work page; vt_present reads from
-the vis page. Multiple pages are allocated at
-vt_screen time via the pages argument (up to 8
-pages, indices 0-7). Page 0 (VT_VIDEO) is always
-the startup visible page. Invalid indices are
-silently ignored.
+Set the active drawing page and the visible display page independently. All drawing commands
+write to the work page; vt_present reads from the vis page. Multiple pages are allocated at
+vt_screen time via the pages argument (up to 8 pages, indices 0-7). Page 0 (VT_VIDEO) is always
+the startup visible page. Invalid indices are silently ignored.
 :syntax
 Sub vt_page(work As Long, vis As Long)
 :params
@@ -2186,10 +2168,8 @@ vt_screen
 :topic vt_pcopy
 :short Copy one page buffer to another
 :group Pages
-Copy one page buffer to another (equivalent to
-QBasic PCOPY). Marks the display dirty but does
-not call vt_present. src = dst is a no-op.
-Invalid indices are silently ignored.
+Copy one page buffer to another (equivalent to QBasic PCOPY). Marks the display dirty but does
+not call vt_present. src = dst is a no-op. Invalid indices are silently ignored.
 :syntax
 Sub vt_pcopy(src As Long, dst As Long)
 :params
@@ -2355,27 +2335,22 @@ vt_pos
 :topic vt_print
 :short Print a string at the current cursor position
 :group Printing
-Print a string at the current cursor position
-using the active colour. The cursor advances
-after each character; the display is not
-automatically flipped. No implicit newline --
-use VT_LF or Chr(10) within the string
-for line breaks. CRLF pairs are collapsed to
-a single line feed. Characters beyond the
-right edge of the print region are wrapped
-to the start again in the same row.
+Print a string at the current cursor position using the active colour. The cursor advances after each character;
+the display is not automatically flipped. No implicit newline, use VT_LF or Chr(10) within the string for line
+breaks. CRLF pairs are collapsed to a single line feed. Characters beyond the right edge of the print region are
+wrapped to the start again in the same row.
 :syntax
 Sub vt_print(txt As String)
 :params
 txt  The string to print. May contain Chr(10)
      for newlines.
 :notes
-When #Define VT_USE_ANSI is set before the
-include, vt_print parses ANSI/VT100 escape
-sequences. Supported: SGR (ESC[...m colours),
-CUP (ESC[row;colH cursor), ED (ESC[2J clear).
-Use Chr(27) or !"\x1b" for the escape byte --
-do NOT use !"\e" as FreeBASIC drops \e silently.
+When #Define VT_USE_ANSI is set, vt_print parses ANSI/VT100 escape sequences. Supported:
+  SGR (ESC[...m colours),
+  CUP (ESC[row;colH cursor),
+  ED (ESC[2J clear).
+
+Use Chr(27) or !"\x1b" for the escape byte - do NOT use !"\e" as FreeBASIC drops \e silently.
 :example
 vt_locate(5, 1)
 vt_color(VT_CYAN, VT_BLACK)
@@ -2418,8 +2393,11 @@ last row. Scrolling is ENABLED by default.
 :syntax
 Sub vt_scroll_enable(state As Byte)
 :params
-state  1 = enable scrolling, 0 = disable.
+state  1 = enable scrolling (default)
+       0 = disable.
 :see
+vt_scroll
+vt_scrollback
 vt_view_print
 vt_print
 
@@ -2506,47 +2484,13 @@ End If
 :see
 vt_width
 
-:topic vt_screen_to_live_row
-:short Map a screen row to a live buffer row
-:group Scroll
-Translate a screen row number to the
-corresponding live buffer row while the
-scrollback view is offset. Useful for
-click-to-locate: call this before snapping
-back to the live view with vt_scroll(-99999).
-:syntax
-Function vt_screen_to_live_row(screen_row As Long) As Long
-:params
-screen_row  1-based screen row as seen during
-            the current scrollback offset.
-:notes
-Return values:
-  > 0  Live buffer row corresponding to
-       screen_row.
-    0  Screen row is pure history with no
-       live equivalent.
-  (pass-through when scrollback is inactive)
-:example
-Dim lr As Long = vt_screen_to_live_row(clk_row)
-If lr > 0 Then
-    vt_scroll(-99999)
-    vt_locate(lr, clk_col)
-End If
-:see
-vt_scroll
-vt_scrollback
-
 :topic vt_scroll
 :short Move the scrollback view by a number of lines
 :group Scroll
-Move the scrollback view offset. Positive values
-scroll toward older history; negative values
-scroll toward the live view. Scrollback must be
-enabled with vt_scrollback first. Does not call
-vt_present. vt_scroll is called automatically
-by the library for the built-in hotkeys -- you
-only need to call it directly for custom input
-such as a mouse wheel handler.
+Move the scrollback view offset. Positive values scroll toward older history; negative values
+scroll toward the live view. Scrollback buffer size must be set with vt_scrollback and it must
+be enabled by vt_scroll_enable(1) first. Does not call vt_present. vt_scroll is called automatically
+by the library for the built-in hotkeys -- you only need to call it directly for custom input such as a mouse wheel handler.
 :syntax
 Function vt_scroll(amount As Long) As Byte
 :params
@@ -2559,9 +2503,9 @@ Return values:
   0  Already at limit, amount is zero, or
      scrollback is disabled.
 :see
+vt_scroll_enable
 vt_scrollback
 hk_scrollback
-vt_screen_to_live_row
 
 :topic vt_view_print
 :short Restrict the scroll and print region
@@ -3144,11 +3088,11 @@ Const VT_RET_YES    = 2
 Const VT_RET_NO     = 3
 
 Dialog button set flags:
-Const VT_DLG_OK          = 1 ' Single OK button
-Const VT_DLG_OKCANCEL    = 2 ' OK + Cancel
-Const VT_DLG_YESNO       = 3 ' Yes + No
-Const VT_DLG_YESNOCANCEL = 4 ' Yes + No + Cancel
-Const VT_DLG_NO_ESC      = 8 ' No ESC, mandatory choice
+Const VT_DLG_OK          = 1  ' Single OK button
+Const VT_DLG_OKCANCEL    = 2  ' OK + Cancel
+Const VT_DLG_YESNO       = 4  ' Yes + No
+Const VT_DLG_YESNOCANCEL = 8  ' Yes + No + Cancel
+Const VT_DLG_NO_ESC      = 16 ' No ESC, mandatory choice
 
 Form item kinds:
 Const VT_FORM_INPUT      = 0 ' Single-line text input
@@ -3159,7 +3103,7 @@ Const VT_FORM_LABEL      = 4 ' Static text label
 
 Widget flags:
 Const VT_TUI_WIN_CLOSEBTN = 1 ' Render [x] Button
-Const VT_TUI_WIN_SHADOW   = 2 ' Drop Shadow
+Const VT_TUI_WIN_SHADOW   = 4 ' Drop Shadow
 Const VT_TUI_PROG_LABEL   = 1 ' Show nn% on bar
 Const VT_TUI_FD_DIRS      = 1 ' Include subdirs in list
 Const VT_TUI_FD_DIRSONLY  = 2 ' Dirs only in picker
@@ -3265,7 +3209,8 @@ Function vt_tui_dialog(caption As String, _
 caption  Title bar text.
 txt      Body text. Word-wrapped to fit width.
 flags    Button set constant, optionally
-         combined with VT_DLG_NO_ESC.
+         combined with VT_DLG_NO_ESC and/or
+         VT_TUI_WIN_SHADOW.
 :notes
 Return: one of VT_RET_OK, VT_RET_CANCEL,
 VT_RET_YES, VT_RET_NO.
@@ -3290,8 +3235,9 @@ Dim r As Long = vt_tui_dialog("Disk Full", _
     "Retry or abort the operation?", _
     VT_DLG_OKCANCEL Or VT_DLG_NO_ESC)
 
-' Simple info box:
-vt_tui_dialog("Done", "File saved successfully.")
+' Simple info box with shadow:
+vt_tui_dialog("Done", "File saved successfully.", _
+    VT_DLG_OK Or VT_TUI_WIN_SHADOW)
 :see
 vt_tui_window
 vt_tui_file_dialog
@@ -3318,9 +3264,7 @@ Opt-in: define VT_USE_TUI before the include.
 :syntax
 Sub vt_tui_editor_draw(x   As Long, y   As Long, _
                        wid As Long, hei As Long, _
-                       ByRef st As _
-                       vt_tui_editor_state)
-                       
+                       ByRef st As vt_tui_editor_state)             
 :params
 x, y     1-based top-left of the editing area.
 wid, hei Width and height in cells.
@@ -3403,7 +3347,9 @@ start_path  Initial directory. Backslashes are
 pattern     Filename wildcard, e.g. "*.txt" or "*".
             Ignored when VT_TUI_FD_DIRSONLY is set.
 flags       VT_TUI_FD_DIRSONLY = show only dirs;
-            Enter or OK on a dir confirms it.
+            F2 or OK confirms the selection.
+            VT_TUI_WIN_SHADOW = drop shadow on the
+            right and bottom edges of the dialog.
 :notes
 Return: full selected path as a String. Directory
 paths end with /. "" on cancel.
@@ -3411,15 +3357,21 @@ paths end with /. "" on cancel.
 Key/mouse bindings:
   Up/Down/PgUp/PgDn/Home/End  Navigate list.
   Enter on a file    Confirm that file.
-  Enter on a dir     Navigate into it (or
-                     confirm in DIRSONLY mode).
-  Double-click       Navigate dir or confirm file.
+  Enter on a dir     Navigate into it (always,
+                     even in DIRSONLY mode).
+  Double-click dir   Navigate into it (always,
+                     even in DIRSONLY mode).
+  Double-click file  Confirm that file.
+  F2 / OK button     Confirm current selection.
+                     In DIRSONLY mode confirms
+                     the highlighted directory
+                     or the current directory
+                     if nothing is highlighted.
   Backspace          Delete last char from name
                      field, or navigate up a dir
                      if name field is empty.
   Tab                Activate name field for entry.
   Printable char     Append to name field.
-  F2                 Keyboard OK button equivalent.
   Escape             Cancel, return "".
 
 :example
@@ -3429,9 +3381,9 @@ If Len(path) > 0 Then
     vt_print("Selected: " & path & VT_LF)
 End If
 
-' Directory picker only:
+' Directory picker with shadow:
 path = vt_tui_file_dialog("Choose Folder", _
-    "./", "*", VT_TUI_FD_DIRSONLY)
+    "./", "*", VT_TUI_FD_DIRSONLY Or VT_TUI_WIN_SHADOW)
 :see
 vt_tui_dialog
 vt_file_list
@@ -4078,7 +4030,7 @@ are fully supported; continuation bytes are validated
 before decoding. 4-byte sequences (Unicode beyond the
 Basic Multilingual Plane) are always dropped as CP437
 has no glyphs for them. Codepoints with no CP437
-equivalent are silently dropped.
+equivalent are shown as '?'.
 
 Bytes that do not form a valid UTF-8 sequence — including
 raw CP437 high bytes such as box-drawing characters from
